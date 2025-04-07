@@ -43,51 +43,52 @@ transform = transforms.Compose([
 dataset = datasets.ImageFolder(root=DATASET_PATH, transform=transform)
 num_classes = len(dataset.classes)
 
-# K-Fold Cross Validation
-k_folds = 5
-kf = KFold(n_splits=k_folds, shuffle=True, random_state=42)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+if __name__ == "__main__":
+    # K-Fold Cross Validation
+    k_folds = 5
+    kf = KFold(n_splits=k_folds, shuffle=True, random_state=42)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-for fold, (train_idx, val_idx) in enumerate(kf.split(dataset)):
-    print(f"Fold {fold+1}/{k_folds}")
-    
-    train_subsampler = Subset(dataset, train_idx)
-    val_subsampler = Subset(dataset, val_idx)
-    
-    train_loader = DataLoader(train_subsampler, batch_size=16, shuffle=True)
-    val_loader = DataLoader(val_subsampler, batch_size=16, shuffle=False)
-    
-    model = CNN(num_classes).to(device)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-    
-    for epoch in range(10):
-        model.train()
-        running_loss = 0.0
-        for images, labels in train_loader:
-            images, labels = images.to(device), labels.to(device)
-            optimizer.zero_grad()
-            outputs = model(images)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-            running_loss += loss.item()
-        print(f"Epoch {epoch+1}, Loss: {running_loss/len(train_loader):.4f}")
-    
-    # Evaluation
-    model.eval()
-    all_preds, all_labels = [], []
-    with torch.no_grad():
-        for images, labels in val_loader:
-            images, labels = images.to(device), labels.to(device)
-            outputs = model(images)
-            _, preds = torch.max(outputs, 1)
-            all_preds.extend(preds.cpu().numpy())
-            all_labels.extend(labels.cpu().numpy())
-    
-    cm = confusion_matrix(all_labels, all_preds)
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=dataset.classes)
-    disp.plot(cmap=plt.cm.Blues)
-    plt.show()
-    
-print("Training complete.")
+    for fold, (train_idx, val_idx) in enumerate(kf.split(dataset)):
+        print(f"Fold {fold+1}/{k_folds}")
+        
+        train_subsampler = Subset(dataset, train_idx)
+        val_subsampler = Subset(dataset, val_idx)
+        
+        train_loader = DataLoader(train_subsampler, batch_size=16, shuffle=True)
+        val_loader = DataLoader(val_subsampler, batch_size=16, shuffle=False)
+        
+        model = CNN(num_classes).to(device)
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.Adam(model.parameters(), lr=0.001)
+        
+        for epoch in range(10):
+            model.train()
+            running_loss = 0.0
+            for images, labels in train_loader:
+                images, labels = images.to(device), labels.to(device)
+                optimizer.zero_grad()
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
+                running_loss += loss.item()
+            print(f"Epoch {epoch+1}, Loss: {running_loss/len(train_loader):.4f}")
+        
+        # Evaluation
+        model.eval()
+        all_preds, all_labels = [], []
+        with torch.no_grad():
+            for images, labels in val_loader:
+                images, labels = images.to(device), labels.to(device)
+                outputs = model(images)
+                _, preds = torch.max(outputs, 1)
+                all_preds.extend(preds.cpu().numpy())
+                all_labels.extend(labels.cpu().numpy())
+        
+        cm = confusion_matrix(all_labels, all_preds)
+        disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=dataset.classes)
+        disp.plot(cmap=plt.cm.Blues)
+        plt.show()
+
+    print("Training complete.")
