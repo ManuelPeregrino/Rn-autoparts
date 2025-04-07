@@ -88,7 +88,9 @@ for fold, (train_idx, val_idx) in enumerate(kf.split(dataset)):
     cm = confusion_matrix(all_labels, all_preds)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=dataset.classes)
     disp.plot(cmap=plt.cm.Blues)
-    plt.show()
+    plt.title(f"Confusion Matrix - Fold {fold}")
+    plt.savefig(f"confusion_matrix_fold{fold}.png")
+    plt.close()
 
     # Save model after training this fold
     model_save_path = f"model_fold{fold}.pth"
